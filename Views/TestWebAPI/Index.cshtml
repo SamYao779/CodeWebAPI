@@ -1,0 +1,148 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<div class="col-md-6">
+    <h2>Get All Contact</h2>
+    <div id="list"></div><hr>
+
+    <h2>Get By Id</h2>
+    <div class="form-inline">
+        @Html.TextBox("getid", null, new { @class = "form-control" })
+        <button class="btn btn-default btn-getid">Get By Id</button>
+    </div>
+    <div id="resultbyid"></div>
+</div>
+<div class="col-md-6">
+    <h2>Create new Contact</h2>
+    <div class="form-group">
+        <label>Name: </label>
+        @Html.TextBox("Name", null, new { @class = "form-control", @placeholder = "Name" })
+        <label>Email: </label>
+        @Html.TextBox("Email", null, new { @class = "form-control", @placeholder = "Email" })<br />
+        <button class="btn btn-default btn-create">Create</button>
+        <button class="btn btn-default btn-update">Update</button>
+        <button class="btn btn-default btn-reset">Reset</button>
+    </div>
+</div>
+
+
+
+@section Scripts{
+    <script>
+        var currentid = -1;
+        // Get All
+        function fnGetAll() {
+            $("#list").html('');
+            $.ajax({
+                type: "GET",
+                url: "/api/WebAPI",
+                success: function (data) {
+                    $(data).each(function (key, val) {
+                        $("<ul/>").html('<a href="#" onclick="fnEdit(\'' + val.Id + '\')">Detail  </a>' + val.Id + ' - ' + val.Name + ' - ' + val.Email + '<a href="#" onclick="fnDelete(\'' + val.Id + '\')">  Delete </a>').appendTo("#list");
+                    });
+                }
+            });
+        }
+
+        // Get By Id
+        function fnGetById() {
+            var id = $("#getid").val();
+            $.ajax({
+                type: "GET",
+                url: "/api/WebAPI/" + id,
+                success: function (data) {
+                    $(data).each(function (key, val) {
+                        $("#resultbyid").html(val.Id + ' - ' + val.Name + ' - ' + val.Email);
+                    });
+                }
+            });
+        }
+
+        // Post (Create) Contact
+        function fnPostContact() {
+            var name = $("#Name").val();
+            var email = $("#Email").val();
+            $.ajax({
+                type: "POST",
+                url: "/api/WebAPI",
+                data: { Name: name, Email: email },
+                success: function (data) {
+                    fnGetAll();
+                    $("#Name").val('');
+                    $("#Email").val('');
+                }
+            });
+        }
+
+        // Put (Update) Contact
+        function fnPutContact() {
+            var name = $("Name").val();
+            var email = $("Email").val();
+            $.ajax({
+                type: "PUT",
+                url: "/api/WebAPI/" + currentid,
+                data: {id:currentid, Name: name, Email: email },
+                success: function (data) {
+                    alert(data.Name);
+                    fnGetAll();
+                    $("#Name").val('');
+                    $("#Email").val('');
+                },
+                error: function (ex) {
+                    alert(ex.responseText);
+                }
+            });
+        }
+
+        // Edit Contact
+        function fnEdit(id) {
+            $.ajax({
+                url: "/api/WebAPI/" + id,
+                success: function (data) {
+                    $("#Name").val(data.Name);
+                    $("#Email").val(data.Email);
+                    currentid = data.Id;
+                },
+                error: function (ex) {
+                    alert(ex);
+                }
+            });
+        }
+
+        // Delete Contact
+        function fnDelete(id) {
+            var conf = confirm('Are yor about to delete this Contact Id' + id + '. Are you sure you want to delete this record ?');
+            if (conf) {
+                $.ajax({
+                    type: "DELETE",
+                    url: "/api/WebAPI/" + id,
+                    success: function (data) {
+                        fnGetAll();
+                    }
+                });
+            }
+        }
+
+        $(function () {
+            fnGetAll();
+
+            $(".btn-getid").click(function () {
+                fnGetById();
+            });
+
+            $(".btn-create").click(function () {
+                fnPostContact();
+            });
+
+            $(".btn-update").click(function () {
+                fnPutContact();
+            });
+
+            $(".btn-reset").click(function () {
+                $("#Name").val("");
+                $("#Email").val("");
+            });
+        });
+    </script>
+}
